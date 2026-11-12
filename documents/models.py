@@ -28,17 +28,6 @@ _MAKERS = {"LENOVO": "Lenovo", "ASUSTEK COMPUTER INC.": "ASUS", "HEWLETT-PACKARD
            "HUAWEI": "Huawei", "SAMSUNG ELECTRONICS CO., LTD.": "Samsung", "MICROSOFT CORPORATION": "Microsoft"}
 
 
-# Cookie that keeps the brand and model a user typed for this device (see accounts.views.DeviceNameView).
-DEVICE_COOKIE = "rk_device"
-DEVICE_NAME_MAX = 60
-
-
-def clean_device_name(value):
-    """Tidy a typed device name, e.g. "  Acer   Aspire 5 " becomes "Acer Aspire 5"."""
-    value = re.sub(r'[\[\]<>"\\;,]', "", str(value or ""))
-    return " ".join(value.split())[:DEVICE_NAME_MAX]
-
-
 @functools.lru_cache(maxsize=1)
 def this_computer_model():
     """Brand and model of the computer the system runs on, e.g. "Lenovo IdeaPad 3 15ITL6".
@@ -544,18 +533,11 @@ class AccessLog(models.Model):
 
     @property
     def device_label(self):
-        """The brand and model the user typed for the device (e.g. "Acer Aspire 5"); failing
-        that, what can be detected (e.g. "Samsung SM-A146P", or this computer's "Lenovo
-        IdeaPad 3 15ITL6"); otherwise the kind of device, e.g. "iPhone"."""
+        """Brand and model where they can be known (e.g. "Samsung SM-A146P", or this
+        computer's "Lenovo IdeaPad 3 15ITL6"); otherwise the kind of device, e.g. "iPhone"."""
         ua = self.user_agent or ""
         if not ua:
             return "—"
-        # A name typed on the device itself (see record()) sits in front of everything else.
-        named = re.match(r"\[device:([^\]]*)\]\s*", ua)
-        if named:
-            if named.group(1).strip():
-                return named.group(1).strip()
-            ua = ua[named.end():]
         # A model the browser handed over separately (see record()) sits in front of the agent string.
         model = ""
         hinted = re.match(r"\[model:([^\]]*)\]\s*", ua)
@@ -604,10 +586,6 @@ class AccessLog(models.Model):
         model = request.META.get("HTTP_SEC_CH_UA_MODEL", "").strip().strip('"')
         if model:
             agent = f"[model:{model[:60]}] {agent}"
-        # The brand and model the user typed for this device, if any.
-        device = clean_device_name(request.COOKIES.get(DEVICE_COOKIE, ""))
-        if device:
-            agent = f"[device:{device}] {agent}"
         cls.objects.create(
             user=request.user if request.user.is_authenticated else None,
             action=action,

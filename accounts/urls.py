@@ -15,7 +15,6 @@ urlpatterns = [
     path("sign-out/", views.ArchiveLogoutView.as_view(), name="logout"),
     path("profile/", views.ProfileView.as_view(), name="profile"),
     path("password/", views.ChangeOwnPasswordView.as_view(), name="password_change"),
-    path("device/", views.DeviceNameView.as_view(), name="device_name"),
     path("notifications/", views.NotificationListView.as_view(), name="notification_list"),
     path("notifications/poll/", views.notifications_poll, name="notifications_poll"),
     path("notifications/<int:pk>/open/", views.notification_open, name="notification_open"),

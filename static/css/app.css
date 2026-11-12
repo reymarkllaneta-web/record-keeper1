@@ -3787,16 +3787,3 @@ td.request-actions .btn {
     justify-content: center;
     white-space: nowrap;
 }
-
-
-/* "Name this device" prompt shown once on each device after signing in */
-.device-prompt {
-    width: min(460px, calc(100vw - 32px));
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 24px;
-    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
-}
-.device-prompt::backdrop { background: rgba(15, 23, 42, 0.45); }
-.device-prompt h2 { margin: 0 0 8px; font-size: 1.15rem; }
-.device-prompt .field input { width: 100%; }

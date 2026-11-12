@@ -8,25 +8,6 @@ from django.contrib.auth.forms import AdminPasswordChangeForm, AuthenticationFor
 
 from .models import Office, User
 
-
-class DeviceNameForm(forms.Form):
-    """The brand and model of the device being used, shown in the audit trail."""
-
-    name = forms.CharField(
-        label="Device brand and model",
-        max_length=60,
-        help_text="For example: Acer Aspire 5, Lenovo IdeaPad 3, Samsung Galaxy A14, iPhone 13.",
-        widget=forms.TextInput(attrs={"placeholder": "Brand and model", "autocomplete": "off"}),
-    )
-
-    def clean_name(self):
-        from documents.models import clean_device_name
-
-        name = clean_device_name(self.cleaned_data.get("name"))
-        if not name:
-            raise forms.ValidationError("Type the brand and model of this device.")
-        return name
-
 AVATAR_MAX_SIZE = 2 * 1024 * 1024
 
 # Sign-in lockout: after this many wrong passwords for one username, that

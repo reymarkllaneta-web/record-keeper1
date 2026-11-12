@@ -101,7 +101,6 @@
         <div class="user-dropdown">
           <a class="user-dropdown-link" href="{% url 'accounts:profile' %}"><svg class="icon icon-sm"><use href="#icon-circle-user"/></svg>Profile</a>
           <a class="user-dropdown-link" href="{% url 'accounts:password_change' %}"><svg class="icon icon-sm"><use href="#icon-lock"/></svg>Password</a>
-          <a class="user-dropdown-link" href="{% url 'accounts:device_name' %}"><svg class="icon icon-sm"><use href="#icon-settings"/></svg>This device</a>
           <form method="post" action="{% url 'accounts:logout' %}">
             {% csrf_token %}
             <button type="submit" class="user-dropdown-link user-dropdown-signout"><svg class="icon icon-sm"><use href="#icon-log-out"/></svg><span>Sign out</span></button>
@@ -144,37 +143,6 @@
 <script src="{% static 'js/loading.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/ph-contact.js' %}?v={{ asset_version }}" defer></script>
 <script src="{% static 'js/sidebar-toggle.js' %}?v={{ asset_version }}" defer></script>
-{% if user.is_authenticated and not request.COOKIES.rk_device and request.resolver_match.url_name != "device_name" %}
-<dialog class="device-prompt" id="device-prompt" aria-labelledby="device-prompt-title">
-  <form method="post" action="{% url 'accounts:device_name' %}">
-    {% csrf_token %}
-    <input type="hidden" name="next" value="{{ request.get_full_path }}">
-    <h2 id="device-prompt-title">Name this device</h2>
-    <p class="helptext">Type the brand and model of the computer or phone you are using. The audit trail will show this name. You only do this once on each device.</p>
-    <div class="field">
-      <label for="device-prompt-name">Device brand and model</label>
-      <input type="text" name="name" id="device-prompt-name" maxlength="60" required autocomplete="off" placeholder="e.g. Acer Aspire 5, Samsung Galaxy A14">
-    </div>
-    <div class="btn-row">
-      <button class="btn" type="submit"><svg class="icon"><use href="#icon-check"/></svg>Save</button>
-      <button class="btn btn--quiet" type="button" id="device-prompt-later">Later</button>
-    </div>
-  </form>
-</dialog>
-<script>
-  (function () {
-    var box = document.getElementById("device-prompt");
-    var later = false;
-    try { later = sessionStorage.getItem("rk-device-later") === "1"; } catch (e) {}
-    if (!box || later || typeof box.showModal !== "function") return;
-    box.showModal();
-    document.getElementById("device-prompt-later").addEventListener("click", function () {
-      try { sessionStorage.setItem("rk-device-later", "1"); } catch (e) {}
-      box.close();
-    });
-  })();
-</script>
-{% endif %}
 {% block extra_scripts %}{% endblock %}
 </body>
 </html>

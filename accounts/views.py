@@ -15,14 +15,12 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views.generic import CreateView, FormView, ListView, UpdateView, View
 
-from django.utils.http import url_has_allowed_host_and_scheme
-from documents.models import DEVICE_COOKIE, AccessLog, Document, Notification
+from documents.models import AccessLog, Document, Notification
 
 from . import brevo, passwordreset, twofactor
 from .forms import (
     AdminSetPasswordForm,
     ArchiveLoginForm,
-    DeviceNameForm,
     OfficeForm,
     ForgotPasswordForm,
     OfficeNotifyForm,
@@ -118,44 +116,6 @@ class ChangeOwnPasswordView(LoginRequiredMixin, FormView):
         update_session_auth_hash(self.request, form.user)
         messages.success(self.request, "Password changed.")
         return super().form_valid(form)
-
-
-class DeviceNameView(LoginRequiredMixin, FormView):
-    """Names the device being used (e.g. "Acer Aspire 5") so the audit trail shows it.
-
-    Browsers do not tell a website which computer or phone they run on, so the user
-    types it once; the name is kept on that device in a cookie for five years.
-    """
-
-    template_name = "accounts/device_name.html"
-    form_class = DeviceNameForm
-
-    def get_initial(self):
-        return {"name": self.request.COOKIES.get(DEVICE_COOKIE, "")}
-
-    def get_next_url(self):
-        target = self.request.POST.get("next") or self.request.GET.get("next") or ""
-        if target and url_has_allowed_host_and_scheme(
-            target, allowed_hosts={self.request.get_host()}, require_https=self.request.is_secure()
-        ):
-            return target
-        return reverse_lazy("documents:dashboard")
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["next"] = self.request.GET.get("next", "")
-        context["current_name"] = self.request.COOKIES.get(DEVICE_COOKIE, "")
-        return context
-
-    def form_valid(self, form):
-        name = form.cleaned_data["name"]
-        response = redirect(self.get_next_url())
-        response.set_cookie(
-            DEVICE_COOKIE, name, max_age=5 * 365 * 24 * 60 * 60,
-            samesite="Lax", httponly=True, secure=self.request.is_secure(),
-        )
-        messages.success(self.request, f"This device is now named {name}.")
-        return response
 
 
 class UserListView(AccountViewerRequiredMixin, ListView):
