@@ -802,3 +802,41 @@ class RecycleBinAutoDeleteTests(ArchiveTestCase):
         self.client.force_login(self.superadmin)
         self.client.post(reverse("documents:document_dispose", args=[self.recent.pk]))
         self.assertFalse(Document.objects.filter(pk=self.recent.pk).exists())
+
+
+class DeviceNameTests(ArchiveTestCase):
+    """Each device is named once by its user; the audit trail shows that name."""
+
+    ANDROID = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36"
+    WINDOWS = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130.0 Safari/537.36"
+
+    def test_saving_a_name_keeps_it_on_the_device(self):
+        self.client.force_login(self.staff)
+        response = self.client.post(reverse("accounts:device_name"), {"name": "  Acer   Aspire 5 ", "next": "/"})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.client.cookies["rk_device"].value, "Acer Aspire 5")
+
+    def test_the_audit_trail_shows_the_typed_name(self):
+        self.client.force_login(self.staff)
+        self.client.cookies["rk_device"] = "Samsung Galaxy A14"
+        self.client.get(reverse("documents:document_list"), {"q": "memo"}, HTTP_USER_AGENT=self.ANDROID)
+        entry = AccessLog.objects.filter(user=self.staff).latest("timestamp")
+        self.assertEqual(entry.device_label, "Samsung Galaxy A14")
+
+    def test_without_a_name_the_detected_kind_is_shown(self):
+        entry = AccessLog(user_agent=self.WINDOWS, ip_address="192.168.1.20")
+        self.assertEqual(entry.device_label, "Windows PC")
+        entry = AccessLog(user_agent=self.ANDROID)
+        self.assertEqual(entry.device_label, "Android phone")
+
+    def test_the_prompt_appears_until_the_device_is_named(self):
+        self.client.force_login(self.staff)
+        self.assertContains(self.client.get(reverse("documents:dashboard")), 'id="device-prompt"')
+        self.client.cookies["rk_device"] = "Acer Aspire 5"
+        self.assertNotContains(self.client.get(reverse("documents:dashboard")), 'id="device-prompt"')
+
+    def test_an_empty_name_is_refused(self):
+        self.client.force_login(self.staff)
+        response = self.client.post(reverse("accounts:device_name"), {"name": "   "})
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("rk_device", self.client.cookies)

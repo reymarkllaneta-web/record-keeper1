@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}This device{% endblock %}
+{% block content %}
+<div class="page-head"><div><div class="eyebrow">Your account</div><h1>This device</h1></div></div>
+<div class="card" style="max-width:560px">
+  <p class="helptext">Type the brand and model of the computer or phone you are using now. The audit trail shows this name for everything done on this device. You only need to do this once per device.</p>
+  {% if current_name %}<p>Current name: <strong>{{ current_name }}</strong></p>{% endif %}
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    {% for field in form %}{% include "form_field.html" %}{% endfor %}
+    <div class="btn-row"><button class="btn" type="submit"><svg class="icon"><use href="#icon-check"/></svg>Save device name</button>
+      <a class="btn btn--cancel" href="{% url 'documents:dashboard' %}"><svg class="icon"><use href="#icon-x"/></svg>Cancel</a></div>
+  </form>
+</div>
+{% endblock %}
