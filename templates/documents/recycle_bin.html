@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Recycle Bin{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><div class="eyebrow">{% if user.is_super_admin %}Super Administrator{% else %}Administrator{% endif %}</div><h1>Recycle Bin</h1></div>
+</div>
+<p class="helptext" style="margin-bottom:1.1rem">
+  Removed records stay here for {{ retention_days }} days and are then deleted permanently, together with their files.
+  Before that, an administrator can restore a record removed by mistake. The super administrator can approve the
+  deletion to delete a record permanently right away, or reject it to put the record back in the registry.
+</p>
+
+{% if waiting_count and user.is_super_admin %}
+<div class="alert alert--warn" style="margin-bottom:1.1rem">
+  <svg class="icon"><use href="#icon-archive"/></svg>
+  <div>
+    <strong>{{ waiting_count }} record{{ waiting_count|pluralize }} in the Recycle Bin</strong>
+    <p>Each one is deleted permanently after {{ retention_days }} days. Approve the deletion to delete it now, or reject it to put it back in the registry.</p>
+  </div>
+</div>
+{% endif %}
+
+<table class="registry">
+  <thead>
+    <tr><th>Control number</th><th>Subject</th><th>Removed</th><th>Permanent deletion</th><th></th></tr>
+  </thead>
+  <tbody>
+  {% for doc in documents %}
+    <tr>
+      <td class="ctrl">{{ doc.control_number }}</td>
+      <td class="subject">{{ doc.subject }}</td>
+      <td class="ctrl">{{ doc.deleted_at|date:"d M Y, H:i" }}</td>
+      <td>
+        {% if doc.days_until_disposal %}
+          <span class="chip chip--warn">{{ doc.days_until_disposal }} day{{ doc.days_until_disposal|pluralize }} left</span>
+        {% else %}
+          <span class="chip chip--stop">Deleted today</span>
+        {% endif %}
+        {% if doc.purge_date %}<div class="helptext" style="margin-top:.25rem">Deleted permanently on {{ doc.purge_date|date:"d M Y" }}</div>{% endif %}
+      </td>
+      <td style="white-space:nowrap">
+        <span class="row-actions">
+        {% if user.is_archive_admin %}
+          <form method="post" action="{% url 'documents:document_restore' doc.pk %}" style="display:inline">
+            {% csrf_token %}
+            <button class="btn btn--restore" type="submit"
+                    title="Put {{ doc.control_number }} back in the registry">
+              Restore
+            </button>
+          </form>
+        {% endif %}
+        {% if user.is_super_admin %}
+        <form method="post" action="{% url 'documents:document_dispose' doc.pk %}" style="display:inline"
+              onsubmit="return confirm('Delete {{ doc.control_number|escapejs }} permanently now, without waiting for the {{ retention_days }} days? The record and its file will be destroyed for good. This cannot be undone.');">
+          {% csrf_token %}
+          <button class="btn btn--danger" type="submit">
+            <svg class="icon icon-sm"><use href="#icon-trash-2"/></svg>Approve deletion
+          </button>
+        </form>
+        <form method="post" action="{% url 'documents:document_reject' doc.pk %}" style="display:inline">
+          {% csrf_token %}
+          <button class="btn btn--restore" type="submit"
+                  title="Reject the deletion and put {{ doc.control_number }} back in the registry">
+            Reject
+          </button>
+        </form>
+        {% endif %}
+        </span>
+      </td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="5" class="empty"><h3>The bin is empty</h3><p>Nothing has been removed from the registry.</p></td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% if is_paginated %}
+<div class="pager">
+  {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+  <span class="ctrl">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}
