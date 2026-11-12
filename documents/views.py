@@ -40,7 +40,7 @@ def _notify_recipients(document):
     """Only people who may actually open the record hear about it.
 
     The notification repeats the control number and subject, so telling a staff
-    user about an internal or confidential filing would leak what the
+    user about a confidential filing would leak what the
     classification is meant to hide.
     """
     people = User.objects.filter(is_active=True)

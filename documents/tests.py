@@ -50,7 +50,7 @@ class ControlNumberTests(ArchiveTestCase):
         form = DocumentForm(data={
             "doc_type": DocumentType.MEMORANDUM, "series_year": 2026, "number": 0,
             "subject": "Zero", "date_issued": "2026-01-15",
-            "status": "ACTIVE", "classification": "INTERNAL",
+            "status": "ACTIVE", "classification": "CONFIDENTIAL",
         })
         self.assertFalse(form.is_valid())
         self.assertIn("number", form.errors)

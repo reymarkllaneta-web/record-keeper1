@@ -271,7 +271,6 @@ class Document(models.Model):
 
     class Classification(models.TextChoices):
         PUBLIC = "PUBLIC", "Public"
-        INTERNAL = "INTERNAL", "Internal"
         CONFIDENTIAL = "CONFIDENTIAL", "Confidential"
 
     # No `choices` here: the catalogue is DocumentFolder, and the forms take
@@ -297,7 +296,7 @@ class Document(models.Model):
 
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.ACTIVE)
     classification = models.CharField(
-        max_length=12, choices=Classification.choices, default=Classification.INTERNAL
+        max_length=12, choices=Classification.choices, default=Classification.CONFIDENTIAL
     )
 
     file = models.FileField(

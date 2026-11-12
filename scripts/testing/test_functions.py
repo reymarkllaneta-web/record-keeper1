@@ -600,7 +600,7 @@ class M09_OverviewAndSearch(Base):
         self.assertContains(response, "2026")
 
     def test_I09_staff_do_not_find_internal_records(self):
-        self.doc(subject="Charlie internal memo", classification=Document.Classification.INTERNAL)
+        self.doc(subject="Charlie internal memo", classification=Document.Classification.CONFIDENTIAL)
         self.client.force_login(self.staff)
         self.assertNotContains(self.client.get(reverse("documents:document_list"), {"q": "Charlie"}),
                                "Charlie internal")
@@ -723,7 +723,7 @@ class M11_ViewingAndDownloading(Base):
                                                  user=self.staff).exists())
 
     def test_K02_staff_cannot_open_an_internal_record(self):
-        document = self.doc(classification=Document.Classification.INTERNAL)
+        document = self.doc(classification=Document.Classification.CONFIDENTIAL)
         self.client.force_login(self.staff)
         self.assertEqual(self.client.get(document.get_absolute_url()).status_code, 404)
 
@@ -796,7 +796,7 @@ class M12_Enclosures(Base):
         self.assertEqual(response.status_code, 404)
 
     def test_L04_staff_cannot_download_an_internal_records_enclosure(self):
-        document = self.doc(classification=Document.Classification.INTERNAL)
+        document = self.doc(classification=Document.Classification.CONFIDENTIAL)
         attachment = Attachment(document=document, label="Annex B", uploaded_by=self.admin)
         attachment.file.save("annex.pdf", SimpleUploadedFile("annex.pdf", pdf_bytes()), save=True)
         self.client.force_login(self.staff)

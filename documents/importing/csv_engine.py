@@ -235,9 +235,9 @@ def _validate_row(result, *, existing_keys, seen_in_batch, date_format):
                 f"'{classification_raw}' isn't a recognized classification. Use one of: "
                 f"{', '.join(Document.Classification.values)}."
             )
-        parsed["classification"] = match or Document.Classification.INTERNAL
+        parsed["classification"] = match or Document.Classification.CONFIDENTIAL
     else:
-        parsed["classification"] = Document.Classification.INTERNAL
+        parsed["classification"] = Document.Classification.CONFIDENTIAL
 
     level_raw = (raw.get("indorsement_level") or "").strip()
     indorsement_level = None
