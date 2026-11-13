@@ -532,7 +532,7 @@ def _open_from_cloudinary_api(name):
 _UNSAFE_IN_FILENAME = re.compile(r'[<>:"/\\|?*]|[\x00-\x1f]')
 
 
-def _download_name(document, extension, label=""):
+def _download_name(document, extension, label="", certified=True):
     """Name the download after the record, not after its storage key.
 
     Stored files carry a random name, which is meaningless once it reaches
@@ -542,7 +542,7 @@ def _download_name(document, extension, label=""):
     stem = document.control_number
     if label:
         stem = f"{stem} - {label}"
-    if extension.lower() == ".pdf":
+    if certified and extension.lower() == ".pdf":
         stem = f"{stem} - certified true copy"
     stem = _UNSAFE_IN_FILENAME.sub("", stem)
     stem = " ".join(stem.split()).strip(" .")
@@ -564,6 +564,15 @@ def _serve(request, file_field, document, action, inline=False, label=""):
             "uploading, or the storage account is not allowing this file to be served.",
         )
         return redirect(document)
+
+    # Storage streams (Cloudinary) are often read-once and not seekable. The PDF
+    # stamper needs to seek, and a failed attempt would leave the stream half
+    # read — the download then arrived as a broken tail of the file. Buffer it.
+    try:
+        data = payload.read()
+    finally:
+        payload.close()
+    payload = io.BytesIO(data)
 
     AccessLog.record(request, action, document=document)
 
@@ -600,10 +609,13 @@ def _serve(request, file_field, document, action, inline=False, label=""):
                     filename=os.path.splitext(filename)[0] + ".pdf",
                 )
         return FileResponse(payload, as_attachment=False, filename=filename)
-    # Not certifiable, but it should still arrive under the record's name.
+    # Not certifiable, but it should still arrive under the record's name —
+    # whole, from the start, and never labelled a certified true copy.
+    payload.seek(0)
     extension = os.path.splitext(filename)[1]
     return FileResponse(
-        payload, as_attachment=True, filename=_download_name(document, extension, label)
+        payload, as_attachment=True,
+        filename=_download_name(document, extension, label, certified=False),
     )
 
 
