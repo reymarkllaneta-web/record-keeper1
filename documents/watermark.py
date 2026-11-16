@@ -174,11 +174,13 @@ def _stamp_pdf(file_obj, subtitle):
             reader.decrypt("")
         except Exception:
             return None
+    # Stamp the pages after they belong to the writer: pypdf 7 no longer lets a
+    # page that is still only in the reader be merged into.
     writer = PdfWriter()
-    for page in reader.pages:
+    for source in reader.pages:
+        page = writer.add_page(source)
         box = page.mediabox
         page.merge_page(_overlay(float(box.width), float(box.height), subtitle))
-        writer.add_page(page)
     out = io.BytesIO()
     writer.write(out)
     out.seek(0)
